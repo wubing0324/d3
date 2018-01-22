@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+  </head>
+
+  <body>
+    <script src="d3.v3.min.js"></script>
+    <script>
+      var svg = d3.select("body").append("svg")
+        .attr("width", 960)
+        .attr("height", 500);
+
+      var filter = svg.append("defs")
+        .append("filter")
+        .attr("id", "blur")
+        .append("feGaussianBlur")
+        .attr("stdDeviation", 5);
+
+      d3.select("body").append("input")
+        .attr("type", "range")
+        .attr("min", 0)
+        .attr("max", 100)
+        .attr("value", 25)
+        .on("change", blur);
+
+      var image = new Image;
+      image.src = "octocat.jpg";
+      image.onload = load;
+
+      function load() {
+        svg.append("image")
+          .attr("xlink:href", this.src)
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("filter", "url(#blur)");
+      }
+
+      function blur() {
+        filter.attr("stdDeviation", this.value / 5);
+      }
+    </script>
+  </body>
+
+</html>

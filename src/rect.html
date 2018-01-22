@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+      .rect {
+  stroke: red;
+  background:linear-gradient(-180deg, #091f63 2%, #08339d 67%, #021d68 100%);
+box-shadow:inset 0px 0px 30px 0px #01154e;
+}
+.tip_box{
+  background-image:linear-gradient(-180deg, #091f63 2%, #08339d 67%, #021d68 100%);
+  box-shadow:inset 0px 0px 30px 0px #01154e;
+  width:140px;
+  height:136px;
+  position: relative;
+}
+.tip_line{
+  background-image:linear-gradient(90deg, rgba(51,224,231,0.00) 2%, #00f5ff 13%, rgba(51,224,231,0.00) 98%);
+  border-radius:2px;
+  width:138px;
+  height:2px;
+}
+.tip_title{
+  font-family:STHeitiTC-Medium;
+  font-size:18px;
+  color:#ffffff;
+  text-align: center;
+  padding: 15px 0 7px 0;
+  margin: 0;
+}
+.tip_content{
+  list-style: none;
+  color: #fff;
+  font-size:16px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 0;
+  height: 94px;
+}
+.tip_content li{
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  text-align: left;
+  height: 25%;
+}
+.tip_num{
+  display: inline-block;
+  width: 30px;
+  text-align: right;
+}
+.tip_lt{
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid red;
+  border-left: 2px solid red;
+}
+.tip_rt{
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid red;
+  border-right: 2px solid red;
+}
+.tip_lb{
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid red;
+  border-left: 2px solid red;
+}
+.tip_rb{
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid red;
+  border-right: 2px solid red;
+}
+.tip_danger{
+  color: #d51457;
+}
+.tip_alarm{
+  color: #e1640b;
+}
+.tip_warning{
+  color: #f9df5d;
+}
+    </style>
+  </head>
+
+  <body>
+    <div class="tip_box">
+      <p class="tip_title">烟厂</p>
+      <div class="tip_line"></div>
+      <ul class="tip_content">
+      	<li><span>危险</span><span class="tip_danger tip_num">3</span></li>
+      	<li><span>报警</span><span class="tip_alarm tip_num">1</span></li>
+      	<li><span>预警</span><span class="tip_warning tip_num">12</span></li>
+      </ul>
+      <div class="tip_lt"></div>
+      <div class="tip_rt"></div>
+      <div class="tip_lb"></div>
+      <div class="tip_rb"></div>
+    </div>
+     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+         <radialGradient id="grad2" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5">
+        <stop offset="0" stop-color="rgb(20,151,252)"/>
+        <stop offset="0.5" stop-color="rgb(164,105,190)"/>
+        <stop offset="1" stop-color="rgb(255,140,0)"/>
+         </radialGradient> 
+          </defs>
+          <rect x="0" y="0" width="400" height="400" fill="url(#grad2)" />
+           </svg> 
+           
+  <svg width="440" height="440" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+      <linearGradient id="Gradient1">
+        <stop class="stop1" offset="0%"/>
+        <stop class="stop2" offset="50%"/>
+        <stop class="stop3" offset="100%"/>
+      </linearGradient>
+      <linearGradient id="Gradient2" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="2%" stop-color="#091f63"/>
+        <stop offset="67%" stop-color="#08339d"/>
+        <stop offset="100%" stop-color="#021d68"/>
+      </linearGradient>
+      <style type="text/css"><![CDATA[
+        #rect1 { fill: url(#Gradient1); }
+        .stop1 { stop-color: red; }
+        .stop2 { stop-color: black; stop-opacity: 0; }
+        .stop3 { stop-color: blue; }
+      ]]></style>
+  </defs>
+ 
+  <rect x="10" y="120" width="140" height="140" box-shadow="inset 0px 0px 30px 0px #01154e" fill="url(#Gradient2)"/>
+  
+</svg>
+    <script src="d3.v3.min.js"></script>
+    <script type="text/javascript">
+      var width = 960,
+        height = 500;
+
+      var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+      var rec = svg.append("rect")
+      .attr('width', "200px")
+      .attr('height', "200px")
+      .attr('fill-opacity', 1)
+      .attr('class', 'rect');
+    </script>
+  </body>
+
+</html>

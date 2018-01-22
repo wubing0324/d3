@@ -1,0 +1,183 @@
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <title>Globe</title>
+    </head>
+    <style>
+        .map_path {
+            stroke: black;
+            stroke-width: 1;
+        }
+        
+        .graticule {
+            fill: rgba(70, 130, 180, 1);
+        }
+    </style>
+
+    <body>
+        <script src="d3.v3.min.js"></script>
+        <script>
+            var width = 1000;
+            var height = 880;
+            var speed = 0.01;
+            var timer;
+
+            var svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("cursor", "move");
+
+            var projection = d3.geo.orthographic()
+                .scale(400).translate([width / 2, height / 2]);
+
+            var graticule = d3.geo.graticule(); //创建一个经纬网生成器。
+
+            var path = d3.geo.path()
+                .projection(projection);
+
+            var color = d3.scale.category20();
+            svg.append("text")
+                .attr("id", "loading")
+                .attr("x", width / 2)
+                .attr("y", height / 2)
+                .text("Now Loading...");
+
+            svg.append("path")
+                .datum(graticule)
+                .attr("class", "graticule")
+                .attr("d", path); //生成经纬度网格线，用于填充海洋背景色
+var tmp;
+            d3.json("world_605kb.json", function(error, root) {
+                if(error)
+                    return console.error(error);
+                var grid = graticule();
+                
+                root.features.forEach(obj => {
+                    if (obj.properties.ADMIN === 'China') {
+                        tmp = Object.assign({}, obj)
+                    }
+                })
+                console.log(tmp)
+
+                var map = svg.append("g");
+
+                var region = map.selectAll(".map_path")
+                    .data(root.features)
+                    .enter();
+
+                region.append("path")
+                    .attr("class", "map_path")
+                    .attr("fill", function(d, i) {
+                        return color(i);
+                    })
+                    .attr("cursor", "pointer")
+                    .attr("d", path)
+                    .on("mouseover", function(d, i) {
+                        d3.select(this)
+                            .attr("fill", "yellow");
+                    })
+                    .on("mouseout", function(d, i) {
+                        d3.select(this)
+                            .attr("fill", color(i));
+                    })
+                map.selectAll('.map_text')
+                    .data(root.features)
+                    .enter()
+                    .append("text")
+                .attr("x", 10)
+                .attr("y", 10)
+                .attr("dy", 10)
+                .text(function(d) {
+                    if (d.geometry){
+                        
+                        return d.properties.ADMIN;
+                    }
+                })
+                .attr('transform', d => {
+                        if (d.geometry){
+                            
+                            const arr = projection([
+                              isNaN(d.geometry.coordinates[0][0][0]) ? 0 : d.geometry.coordinates[0][0][0],
+                              isNaN(d.geometry.coordinates[0][0][1]) ? 0 : d.geometry.coordinates[0][0][1]
+                            ]);
+                            return 'translate(' + arr + ')';
+                        }
+                          })
+                .attr("d", path);
+
+                svg.select("#loading")
+                    .attr("opacity", 0);
+
+                function pause() {
+                    if(timer) {
+                        clearInterval(timer);
+                    }
+                }
+
+                function play() {
+                    speed = speed + 0.3
+                    projection.rotate([speed, -15]).clipAngle(90);
+
+                    map.selectAll(".map_path")
+                        .attr("d", path);
+                    map.selectAll(".map_text")
+                        .attr("d", path);
+                    raf = window.requestAnimationFrame(play);
+                }
+                var drag = d3.behavior.drag();
+                svg.call(drag);
+                drag.on("drag", function() {
+                    d3.event.sourceEvent.stopPropagation(); // silence other listeners
+                    var dx = d3.event.dx;
+                    var dy = d3.event.dy;
+                    var rotation = projection.rotate();
+                    var radius = projection.scale();
+                    var scale = d3.scale.linear()
+                        .domain([-1 * radius, radius])
+                        .range([-90, 90]);
+                    var degX = scale(dx);
+                    var degY = scale(dy);
+                    rotation[0] += degX;
+                    speed = rotation[0];
+                    rotation[1] = -15;
+                    if(rotation[1] > 90) rotation[1] = 90;
+                    if(rotation[1] < -90) rotation[1] = -90;
+                    if(rotation[0] >= 180) rotation[0] -= 360;
+                    projection.rotate(rotation);
+                    map.selectAll(".map_path").attr("d", path);
+                });
+                
+                d3.selectAll(".graticule").on('mouseover', function() {
+                    if(raf) {
+                        window.cancelAnimationFrame(raf);
+                        raf = !raf
+                    } else {
+                        raf = window.requestAnimationFrame(drawFrame);
+                    }
+                })
+                map.on('mouseover', function() {
+                    if(raf) {
+                        window.cancelAnimationFrame(raf);
+                        raf = !raf
+                    } else {
+                        raf = window.requestAnimationFrame(drawFrame);
+                    }
+                })
+                d3.selectAll(".graticule").on('mouseout', function() {
+                    play()
+                })
+                map.on('mouseout', function() {
+                    play()
+                })
+                
+                
+                
+                
+                play()
+            });
+        </script>
+
+    </body>
+
+</html>

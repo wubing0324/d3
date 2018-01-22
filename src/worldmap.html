@@ -1,0 +1,259 @@
+<html>
+ <head>  
+        <meta charset="utf-8">  
+        <title>Globe</title>  
+  </head> 
+<style>
+
+.map_path {
+    stroke: black;
+    stroke-width: 1;
+}
+
+.grid_path{
+    stroke: gray;
+    stroke-width: 1;
+    fill:none;
+    opacity: 1;
+}
+.circleStyle{
+        background:#36ebcf;
+        box-shadow:0px 0px 4px 0px #36ebcf;
+        width:14px;
+        height:14px;
+        border-radius:100%;
+      }
+.graticule{
+    fill: rgba(70,130,180,1);
+}
+</style>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+    var width  = 1000;
+    var height = 880;
+    var speed = 0.01;
+    var startTime = Date.now();
+    var currentTime = Date.now();
+
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+    
+    var projection = d3.geo.orthographic() 
+                        .scale(400).translate([width / 2, height / 2]);
+                        
+    var graticule = d3.geo.graticule();//创建一个经纬网生成器。
+    
+    var path = d3.geo.path()
+                    .projection(projection);
+    
+    var color = d3.scale.category20();
+    svg.append("text")
+        .attr("id","loading")
+        .attr("x",width/2)
+        .attr("y",height/2)
+        .text("Now Loading...");
+        
+//      svg.append("defs").append("path")
+//  .datum({type: "Sphere"})
+//  .attr("id", "sphere")
+//  .attr("d", path);
+//
+//svg.append("use")
+//  .attr("class", "stroke")
+//  .attr("xlink:href", "#sphere");
+//
+//svg.append("use")
+//  .attr("class", "fill")
+//  .attr("xlink:href", "#sphere");
+
+svg.append("path")
+    .datum(graticule)
+    .attr("class", "graticule")
+    .attr("d", path); //生成经纬度网格线，用于填充海洋背景色
+    
+    d3.json("world_605kb.json", function(error, root) {
+        if (error) 
+            return console.error(error);
+        console.log(root.features);
+        var textArr = [];
+        root.features.forEach(obj => {
+            if(obj.properties.SOVEREIGNT === 'China') {
+                textArr.push(obj)
+            }
+        })
+        var grid = graticule();
+        
+        console.log(grid)
+        
+        var map = svg.append("g");
+        
+//      map.append("path")
+//          .datum( grid )
+//          .attr("id","grid_id")
+//          .attr("class","grid_path")
+//          .attr("d",path);
+        var region = map.selectAll(".map_path")
+                .data( root.features )
+                .enter();
+//      region.append("text")
+//              .attr("x", 10)
+//              .attr("y", 10)
+//              .attr("dy", 10)
+//              .text(function(d) {
+//                  console.log(d.properties.SOVEREIGNT)
+//                  return d.properties.SOVEREIGNT;
+//              })
+//              .attr('transform', d => {
+//                      if (d.geometry){
+//                          
+//                          const arr = projection([
+//                            isNaN(d.geometry.coordinates[0][0][0]) ? 0 : d.geometry.coordinates[0][0][0],
+//                            isNaN(d.geometry.coordinates[0][0][1]) ? 0 : d.geometry.coordinates[0][0][1]
+//                          ]);
+//                          return 'translate(' + arr + ')';
+//                      }
+//                        })
+//              .attr("d", path);
+
+        
+        region.append("path")
+        .attr("class","map_path")
+        .attr("fill",function(d,i){
+            return color(i);
+        })
+        .attr("d", path )
+        .on("mouseover",function(d,i){
+            d3.select(this)
+                .attr("fill","yellow");
+        })
+        .on("mouseout",function(d,i){
+            d3.select(this)
+                .attr("fill",color(i));
+        });
+        console.log(textArr)
+
+        svg.select("#loading")
+            .attr("opacity",0);
+        
+//      d3.timer(function() {
+//          
+//          currentTime = Date.now();
+//          
+//          projection.rotate([speed * (currentTime - startTime), -15]).clipAngle(92);
+//          
+////          map.select("#grid_id")
+////              .attr("d",path);
+//      
+//          map.selectAll(".map_path")
+//          .attr("d", path);
+//      });
+        var timer;
+        function pause(){
+            if (timer) {
+                clearInterval(timer);
+            }
+        }
+        function play(){
+//          currentTime = Date.now();
+            speed = speed + 0.3
+            projection.rotate([speed, -15]).clipAngle(90);
+            
+            map.selectAll(".map_path")
+            .attr("d", path);
+            raf = window.requestAnimationFrame(play);
+        }
+        play()
+        var drag = d3.behavior.drag();
+//      d3.selectAll(".graticule").call(drag);
+        svg.call(drag);
+        drag.on("drag", function() {
+          d3.event.sourceEvent.stopPropagation(); // silence other listeners
+//        console.log('drag')
+//        speed--;
+//        projection.rotate([speed, -15]).clipAngle(90);
+//        map.selectAll(".map_path")
+//          .attr("d", path);
+            console.log(d3.event)
+            var dx = d3.event.dx;
+            var dy = d3.event.dy;
+            var rotation = projection.rotate();
+            var radius = projection.scale();
+            var scale = d3.scale.linear()
+              .domain([-1 * radius, radius])
+              .range([-90, 90]);
+            var degX = scale(dx);
+            var degY = scale(dy);
+            rotation[0] += degX;
+            speed = rotation[0];
+//          rotation[1] -= degY;
+            rotation[1] = -15;
+            console.log(degX)
+             if (rotation[1] > 90)   rotation[1] = 90;
+            if (rotation[1] < -90)  rotation[1] = -90;
+            if (rotation[0] >= 180) rotation[0] -= 360;
+            projection.rotate(rotation);
+            map.selectAll(".map_path")
+            .attr("d", path);
+        });
+        drag.on("dragstart", function(e) {
+          d3.event.sourceEvent.stopPropagation(); // silence other listeners
+          console.log(path.centroid(e));
+          console.log(d3.event.sourceEvent.y)
+        });
+        drag.on("dragend", function() {
+          d3.event.sourceEvent.stopPropagation(); // silence other listeners
+          console.log('dragend')
+          console.log(d3.event.sourceEvent.y)
+        });
+        d3.selectAll(".graticule").on('mouseover', function(){
+            if (raf) {
+                window.cancelAnimationFrame(raf);
+                raf = !raf
+            } else {
+                raf = window.requestAnimationFrame(drawFrame);
+            }
+        })
+        map.on('mouseover', function(){
+            if (raf) {
+                window.cancelAnimationFrame(raf);
+                raf = !raf
+            } else {
+                raf = window.requestAnimationFrame(drawFrame);
+            }
+        })
+        d3.selectAll(".graticule").on('mouseout', function(){
+            play()
+        })
+        map.on('mouseout', function(){
+            play()
+        })
+    });
+//  function drawCir(d) {
+//        var cls = d.properties.SOVEREIGNT + '_dot';
+//        const result = svg.selectAll('.' + cls)
+//          .data(new Array(d))
+//          .enter()
+//          .append('g')
+//          .attr('class', cls);
+//          
+//          result.append("circle")
+//            .attr("r", 4.5)
+//            .attr("fill", "#36ebcf")
+//            .attr("class", 'circleStyle')
+//            .attr('transform', d => {
+//              const arr = projection([
+//                isNaN(d.geometry.coordinates[0][0][0]) ? 0 : d.geometry.coordinates[0][0][0],
+//                isNaN(d.geometry.coordinates[0][0][1]) ? 0 : d.geometry.coordinates[0][0][1]
+//              ]);
+//              return 'translate(' + arr + ')';
+//            });
+//      }
+    
+
+</script>
+    
+</body>  
+</html>  

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+	  <script src="d3.v3.min.js"></script>
+	  <script type="text/javascript">
+	  	d3.select("body").selectAll("div")
+    .data([4, 8, 15, 16, 23, 42])
+  .enter().append("div")
+    .text(function(d) { return d; });
+    var div = d3.select("body").selectAll("div")
+    .data([1, 2, 4, 8, 16, 32], function(d) { return d; });
+    div.enter().append("div")
+    .text(function(d) { return d; });
+    div.exit().remove();
+    var color = d3.scale.linear()
+    .domain([-1, 0, 1])
+    .range(["red", "white", "green"]);
+    console.log(color(-1));
+	  </script>
+	</body>
+</html>

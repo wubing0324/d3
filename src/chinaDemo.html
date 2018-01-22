@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+      body{
+        background: url(bg.png) no-repeat 0 0;
+        height: 100%;
+      }
+    	.tip_box{
+        background-image:linear-gradient(-180deg, #091f63 2%, #08339d 67%, #021d68 100%);
+        box-shadow:inset 0px 0px 30px 0px #01154e;
+        width:140px;
+        height:136px;
+        position: relative;
+      }
+      .tip_line{
+        background-image:linear-gradient(90deg, rgba(51,224,231,0.00) 2%, #00f5ff 13%, rgba(51,224,231,0.00) 98%);
+        border-radius:2px;
+        width:138px;
+        height:2px;
+      }
+      .tip_title{
+        font-family:STHeitiTC-Medium;
+        font-size:18px;
+        color:#ffffff;
+        text-align: center;
+        padding: 15px 0 7px 0;
+        margin: 0;
+      }
+      .tip_content{
+        list-style: none;
+        color: #fff;
+        font-size:16px;
+        width: 100%;
+        margin: 0;
+        padding: 6px 0;
+        height: 94px;
+      }
+      .tip_content li{
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        text-align: left;
+        height: 25%;
+      }
+      .tip_num{
+        display: inline-block;
+        width: 30px;
+        text-align: right;
+      }
+      .tip_lt{
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 12px;
+        height: 12px;
+        border-top: 2px solid red;
+        border-left: 2px solid red;
+      }
+      .tip_rt{
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 12px;
+        height: 12px;
+        border-top: 2px solid red;
+        border-right: 2px solid red;
+      }
+      .tip_lb{
+        position: absolute;
+        bottom: -2px;
+        left: -2px;
+        width: 12px;
+        height: 12px;
+        border-bottom: 2px solid red;
+        border-left: 2px solid red;
+      }
+      .tip_rb{
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 12px;
+        height: 12px;
+        border-bottom: 2px solid red;
+        border-right: 2px solid red;
+      }
+      .tip_danger{
+        color: #d51457;
+      }
+      .tip_alarm{
+        color: #e1640b;
+      }
+      .tip_warning{
+        color: #f9df5d;
+      }
+      .circleStyle{
+        background:#36ebcf;
+        box-shadow:0px 0px 4px 0px #36ebcf;
+        width:14px;
+        height:14px;
+        border-radius:100%;
+      }
+      .circleStyle,.circleStyle:before,.circleStyle:after {
+        display:block;
+        border-radius:2px;
+        margin:0 auto;
+        width:2px;
+        height:2px;
+        -webkit-animation:rip 2s infinite;
+        -moz-animation:rip 2s infinite;
+      }
+      
+      .bgMap{
+        width: 100%;
+        height: 800px;
+        position: absolute;
+        top: 7px;
+        left: 7px;
+        border: 1px solid red;
+        z-index: -10;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="bgMap"></div>
+    <script src="d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <script type="text/javascript">
+      width = 1000;
+      height = 800;
+      const centerCp = [105, 38];
+      var zoom = d3.behavior.zoom()
+    .translate([0,0])
+    .scale(1)
+    .scaleExtent([1, 8])
+    .on("zoom", zoomed);
+      var svg = d3.select("body") //选择文档中的body元素
+        .append("svg") //添加一个svg元素
+        .attr("width", width) //设定宽度
+        .attr("height", height)
+        .append("g");
+      var svg1 = d3.select(".bgMap") //选择文档中的body元素
+        .append("svg") //添加一个svg元素
+        .attr("width", width) //设定宽度
+        .attr("height", height)
+        .append("g");
+      var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function(d) {
+          return "<div class='tip_box'>" + 
+            "<p class='tip_title'>烟厂</p>" +
+            "<div class='tip_line'></div>" +
+            "<ul class='tip_content'>" +
+              "<li><span>危险</span><span class='tip_danger tip_num'>3</span></li>" +
+              "<li><span>报警</span><span class='tip_alarm tip_num'>1</span></li>" +
+              "<li><span>预警</span><span class='tip_warning tip_num'>12</span></li>" +
+            "</ul>" +
+            "<div class='tip_lt'></div>" +
+            "<div class='tip_rt'></div>" +
+            "<div class='tip_lb'></div>" +
+            "<div class='tip_rb'></div>" +
+          "</div>";
+        });
+      svg.call(tip);
+
+      var projection = d3.geo.mercator()
+        .center(centerCp)
+        .scale(850)
+        .translate([width / 2, height / 2]);
+
+      var path = d3.geo.path()
+        .projection(projection);
+      d3.json("chinamaps.json", function(error, root) {
+        var data = root[0];
+        var color = d3.scale.category20();
+        svg.selectAll('path')
+          .data(data.features)
+          .enter()
+          .append('path')
+          .attr('fill', '#2735b0')
+          .attr('fill-opacity', 1)
+          .attr('stroke', '#57afef')
+          .attr('stroke-width', 1)
+          .attr('stroke-opacity', .3)
+          .attr('class', d => {
+            if(d.properties.hasOwnProperty('district') && d.properties.district.hasOwnProperty('name')) {
+              return d.properties.district.name;
+            }
+            return '';
+          })
+          .attr('d', d => {
+            if(d.properties.hasOwnProperty('district') && d.properties.district.hasOwnProperty('name')) {
+              drawCir(d)
+            }
+            return path(d);
+          })
+          .on("mouseover", function(d, i) {
+            d3.select(this)
+              .attr("fill-opacity", 0.9);
+          })
+          .on("mouseout", function(d, i) {
+            d3.select(this)
+              .attr("fill-opacity", 1);
+          });
+          svg1.selectAll('path')
+          .data(data.features)
+          .enter()
+          .append('path')
+          .attr('fill', 'none')
+          .attr('fill-opacity', 0)
+          .attr('stroke', '#57afef')
+          .attr('stroke-width', 3)
+          .attr('stroke-opacity', 1)
+          .attr('class', d => {
+            if(d.properties.hasOwnProperty('district') && d.properties.district.hasOwnProperty('name')) {
+              return d.properties.district.name;
+            }
+            return '';
+          })
+          .attr('d', d => {
+            if(d.properties.hasOwnProperty('district') && d.properties.district.hasOwnProperty('name')) {
+              drawCir(d);
+            }
+            return path(d);
+          });
+      });
+      function drawCir(d) {
+          var cls = d.properties.district.name + '_dot';
+          const result = svg.selectAll('.' + cls)
+            .data(new Array(d))
+            .enter()
+            .append('g')
+            .attr('class', cls);
+            
+//          var marker = layer.selectAll("g")
+//            .data(d3.entries(data))
+//            .enter().append("g")
+//            .attr("transform", transform);
+
+          // Add a circle.
+//            .transition()
+//            .style('fill-opacity', 0)
+//            .duration(5000)
+
+//var cir = result.selectAll("circle")
+//  .data([0, 1, 2], function(d) { return d; });
+//  cir.enter().append("circle");
+var data = [
+{
+    'attributeName': 'stroke-opacity',
+    'attributeType': 'XML',
+    'from': '1',
+    'to': '0',
+    'begin': '0s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  },
+  {
+    'attributeName': 'r',
+    'attributeType': 'XML',
+    'from': '0',
+    'to': '30',
+    'begin': '0s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  }
+]
+var data1 = [
+{
+    'attributeName': 'stroke-opacity',
+    'attributeType': 'XML',
+    'from': '1',
+    'to': '0',
+    'begin': '1s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  },
+  {
+    'attributeName': 'r',
+    'attributeType': 'XML',
+    'from': '0',
+    'to': '30',
+    'begin': '1s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  }
+]
+var data2 = [
+{
+    'attributeName': 'stroke-opacity',
+    'attributeType': 'XML',
+    'from': '1',
+    'to': '0',
+    'begin': '2s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  },
+  {
+    'attributeName': 'r',
+    'attributeType': 'XML',
+    'from': '0',
+    'to': '30',
+    'begin': '2s',
+    'dur': '3s',
+    'fill': 'remove',
+    'repeatCount': 'indefinite'
+  }
+]
+            result.append("circle")
+              .attr("r", 6.5)
+              .attr("fill", "none")
+              .attr("class", 'circleStyle')
+              .attr('stroke', '#57afef')
+              .attr('stroke-width', 3)
+              .attr('transform', d => {
+                  console.log(d)
+                const arr = projection([
+                  isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+                  isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+                ]);
+                return 'translate(' + arr + ')';
+              })
+              .selectAll("animate")
+              .data(data, function(d) { return d.attributeName; })
+              .enter()
+              .append("animate")
+              .attr('attributeName', function(d){
+                return d.attributeName
+              })
+              .attr('attributeType', function(d){
+                return d.attributeType
+              })
+              .attr('from', function(d){
+                return d.from
+              })
+              .attr('to', function(d){
+                return d.to
+              })
+              .attr('begin', function(d){
+                return d.begin
+              })
+              .attr('dur', function(d){
+                return d.dur
+              })
+              .attr('fill', function(d){
+                return d.fill
+              })
+              .attr('repeatCount', function(d){
+                return d.repeatCount
+              });
+            result.append("circle")
+              .attr("r", 6.5)
+              .attr("fill", "none")
+              .attr("class", 'circleStyle')
+              .attr('stroke', '#57afef')
+              .attr('stroke-width', 3)
+              .attr('transform', d => {
+                const arr = projection([
+                  isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+                  isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+                ]);
+                return 'translate(' + arr + ')';
+              })
+              .selectAll("animate")
+              .data(data1, function(d) { return d.attributeName; })
+              .enter()
+              .append("animate")
+              .attr('attributeName', function(d){
+                return d.attributeName
+              })
+              .attr('attributeType', function(d){
+                return d.attributeType
+              })
+              .attr('from', function(d){
+                return d.from
+              })
+              .attr('to', function(d){
+                return d.to
+              })
+              .attr('begin', function(d){
+                return d.begin
+              })
+              .attr('dur', function(d){
+                return d.dur
+              })
+              .attr('fill', function(d){
+                return d.fill
+              })
+              .attr('repeatCount', function(d){
+                return d.repeatCount
+              });
+            result.append("circle")
+              .attr("r", 6.5)
+              .attr("fill", "none")
+              .attr("class", 'circleStyle')
+              .attr('stroke', '#57afef')
+              .attr('stroke-width', 3)
+              .attr('transform', d => {
+                const arr = projection([
+                  isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+                  isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+                ]);
+                return 'translate(' + arr + ')';
+              })
+              .selectAll("animate")
+              .data(data2, function(d) { return d.attributeName; })
+              .enter()
+              .append("animate")
+              .attr('attributeName', function(d){
+                return d.attributeName
+              })
+              .attr('attributeType', function(d){
+                return d.attributeType
+              })
+              .attr('from', function(d){
+                return d.from
+              })
+              .attr('to', function(d){
+                return d.to
+              })
+              .attr('begin', function(d){
+                return d.begin
+              })
+              .attr('dur', function(d){
+                return d.dur
+              })
+              .attr('fill', function(d){
+                return d.fill
+              })
+              .attr('repeatCount', function(d){
+                return d.repeatCount
+              });
+               result.append("circle")
+              .attr("r", 4.5)
+              .attr("fill", "#36ebcf")
+              .attr("class", 'circleStyle')
+              .attr('transform', d => {
+                const arr = projection([
+                  isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+                  isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+                ]);
+                return 'translate(' + arr + ')';
+              })
+              .on('mouseover', tip.show)
+              .on('mouseout', tip.hide);
+//          result.append("circle")
+//            .attr("r", 6.5)
+//            .attr("fill", "none")
+//            .attr("class", 'circleStyle')
+//            .attr('stroke', '#57afef')
+//            .attr('stroke-width', 1)
+//            .attr('transform', d => {
+//              const arr = projection([
+//                isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+//                isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+//              ]);
+//              return 'translate(' + arr + ')';
+//            })
+//.attr({
+//              'attributeName': 'r',
+//              'attributeType': 'XML',
+//              'from': '6.5',
+//              'to': '10',
+//              'begin': '0s',
+//              'dur': '2s',
+//              'fill': 'remove',
+//              'repeatCount': 'indefinite'
+//            })
+//            .append("animate")
+//            .attr({
+//              'attributeName': 'strokeOpacity',
+//              'attributeType': 'XML',
+//              'from': '1',
+//              'to': '0',
+//              'begin': '0s',
+//              'dur': '2s',
+//              'fill': 'remove',
+//              'repeatCount': 'indefinite'
+//            })
+
+          // Add a label.
+          result.append("text")
+              .attr("x", 7)
+              .attr("dy", ".31em")
+              .attr('transform', d => {
+                const arr = projection([
+                  isNaN(d.properties.district.cp[0]) ? 0 : d.properties.district.cp[0],
+                  isNaN(d.properties.district.cp[1]) ? 0 : d.properties.district.cp[1]
+                ]);
+                return 'translate(' + arr + ')';
+              })
+              .text(function(d) { return d.properties.district.name_cn; })
+              .attr('fill', 'green');
+        }
+        function zoomed() {
+          svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        }
+    </script>
+  </body>
+
+</html>
